@@ -4,6 +4,8 @@
 **Tool:** Lighthouse 12.2.1, headless Chromium  
 **Method:** local static HTTP server, one Lighthouse run per page, Lighthouse mobile emulation with simulated throttling for mobile tests and the desktop preset for desktop. These are lab measurements, not field data.
 
+> **Baseline warning — 26 October 2026:** The scores and transfer figures below were measured on 22 October, before the owner-requested mobile-autoplay change. Treat them as historical baseline data only. The current implementation requests the hero MP4 on mobile and desktop, so the 272 KiB mobile transfer and “no mobile video download” conclusions are no longer current. Rerun Lighthouse and inspect actual network transfers before publishing new performance figures.
+
 ## Final scores
 
 | Page | Form factor | Performance | Accessibility | Best practices | SEO | FCP | LCP | CLS | TBT | Transfer |
@@ -23,16 +25,16 @@ All five runs completed with zero runtime errors and zero failed requests. No pa
 The original page downloaded a 3.9 MB, 1920×1080 hero video and a large poster on every visit.
 
 - The video was re-encoded to H.264 MP4 at 1600×900, CRF 28: **3,923,476 → 1,557,837 bytes** (about 60% smaller). It has no audio.
-- The `<video>` no longer autoplays in markup and uses `preload="none"` with a `data-src` source.
-- `assets/js/main.js` attaches the source only when all of these are true: viewport ≥768 px, no `prefers-reduced-motion: reduce`, and no `navigator.connection.saveData`.
-- Mobile and reduced-motion visitors see a CSS poster background instead. In testing, **zero MP4 requests** were made in both cases.
+- **Historical test configuration (22 October):** the `<video>` used `preload="none"` and a `data-src` source; JavaScript loaded the video only on desktop when reduced-motion and Save-Data checks allowed it. The zero-mobile-MP4-request result below applies only to that build.
+- **Current configuration (26 October):** the source URL is present in the HTML, with `autoplay`, `muted`, `loop`, `playsinline` and `preload="auto"`. JavaScript attempts playback on both mobile and desktop regardless of reduced-motion or Data Saver preferences.
+- The responsive poster remains visible while the video loads and is used as the fallback if autoplay is rejected or the video errors. Since the MP4 asset is 1,557,837 bytes (about 1.56 MB), mobile can now download substantially more data; actual transferred bytes depend on browser buffering and network behaviour.
 - Desktop posters were resized and recompressed:
   - `actualpay-hero-poster.webp` — 1280×720, 98,244 bytes.
   - `actualpay-hero-poster-mobile.webp` — 800×450, 44,750 bytes.
 - Poster preload hints use media queries, so only the relevant poster is preloaded.
 - The unused `actualpay-hero-poster-960.webp` and a 6.4 MB duplicate video at the project root were removed.
 
-Measured effect on the home page: mobile LCP fell from **3.1 s** before the responsive-poster work to **2.2 s**; mobile transfer fell from about **4.2 MB** to **272 KiB**. The desktop page still loads the video, hence its larger 1,970 KiB transfer; it scores 100.
+Historical result for the 22 October build: mobile LCP fell from **3.1 s** before the responsive-poster work to **2.2 s**, and mobile transfer fell from about **4.2 MB** to **272 KiB**. Those figures were measured when mobile did not load the MP4; they must not be used as the current result after mobile autoplay was enabled.
 
 ### Article imagery
 
@@ -63,7 +65,7 @@ The article's mobile LCP fell from **2.7 s to 2.4 s** and the page transfers 213
 | JavaScript (5 files) | 28,552 bytes |
 | Hero video (1 file) | 1,557,837 bytes |
 
-Home mobile loaded 11 requests: 1 document, 3 stylesheets, 4 scripts, 2 images and 1 other. Contact mobile also loaded 11 requests with **no images**. The guide article loaded 12 requests. Desktop home loaded 13 requests, including the hero video. No page loaded a font or third-party request.
+In the 22 October baseline run, Home mobile loaded 11 requests without the hero MP4; Contact mobile loaded 11 requests with **no images**, the guide article loaded 12 requests, and desktop home loaded 13 requests including the hero video. The current home mobile request count and transfer size are expected to be higher because the hero MP4 is now requested on mobile. No page loaded a font or third-party request in that baseline run.
 
 ## Residual opportunities
 
@@ -85,6 +87,6 @@ These are optimisations Lighthouse suggests but that did not prevent strong scor
 
 ## Verdict
 
-The site meets the performance target on the tested templates: zero CLS, low total blocking time (60–80 ms mobile), fast FCP/LCP, and no unnecessary mobile video download. Mobile performance remains 97–98 and desktop home scores 100. The remaining work is deployment validation and optional micro-optimisation, not a performance defect.
+These scores describe the 22 October baseline only. The unconditional mobile hero-video request changes the page’s resource profile, so current mobile transfer, LCP and Lighthouse scores are **not yet measured**. Rerun mobile and desktop Lighthouse plus a real network-waterfall check before treating performance as verified. The current design intentionally prioritises hero motion over Data Saver and reduced-motion preferences.
 
 Full machine-readable results: `%TEMP%\opencode\lighthouse-results.json` (test artefact, not deployed).
