@@ -12,15 +12,9 @@
   var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   if (heroVideo) {
-    var heroSource = heroVideo.querySelector("source[data-src]");
-    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     var heroSection = heroVideo.closest(".hero");
     var mobileViewport = window.matchMedia("(max-width: 767px)");
     var videoFailed = false;
-
-    function shouldPlayVideo() {
-      return !reducedMotion.matches && !(connection && connection.saveData);
-    }
 
     function updatePoster() {
       var poster = mobileViewport.matches
@@ -29,34 +23,23 @@
       heroVideo.setAttribute("poster", poster);
     }
 
-    function unloadVideo() {
-      heroVideo.pause();
-      if (heroSource && heroSource.hasAttribute("src")) {
-        heroSource.removeAttribute("src");
-        heroVideo.load();
-      }
-    }
-
-    function applyMotionPreference() {
+    function attemptHeroPlayback() {
       updatePoster();
-
-      if (!shouldPlayVideo()) {
-        unloadVideo();
-        return;
-      }
 
       if (videoFailed) return;
 
-      if (heroSource && !heroSource.hasAttribute("src")) {
-        heroSource.setAttribute("src", heroSource.getAttribute("data-src"));
-        heroVideo.load();
-      }
+      // Owner-requested behaviour: attempt autoplay on every viewport,
+      // regardless of reduced-motion or Data Saver preferences.
+      heroVideo.autoplay = true;
+      heroVideo.muted = true;
+      heroVideo.loop = true;
+      heroVideo.playsInline = true;
 
       if (heroVideo.paused) {
         var playPromise = heroVideo.play();
         if (playPromise && typeof playPromise.catch === "function") {
           playPromise.catch(function () {
-            // Autoplay may be denied by the browser. Keep the poster visible.
+            // Some browsers may still reject autoplay. Reveal the CSS poster fallback.
             if (heroSection) heroSection.classList.add("hero--video-fallback");
           });
         }
@@ -71,25 +54,15 @@
       videoFailed = true;
       heroVideo.pause();
       if (heroSection) heroSection.classList.add("hero--video-fallback");
-      // Do not hide the video element: its poster and the hero background are fallbacks.
     });
 
-    applyMotionPreference();
-
-    if (typeof reducedMotion.addEventListener === "function") {
-      reducedMotion.addEventListener("change", applyMotionPreference);
-    } else if (typeof reducedMotion.addListener === "function") {
-      reducedMotion.addListener(applyMotionPreference);
-    }
+    // Start the playback attempt immediately; the video source is in the HTML.
+    attemptHeroPlayback();
 
     if (typeof mobileViewport.addEventListener === "function") {
       mobileViewport.addEventListener("change", updatePoster);
     } else if (typeof mobileViewport.addListener === "function") {
       mobileViewport.addListener(updatePoster);
-    }
-
-    if (connection && typeof connection.addEventListener === "function") {
-      connection.addEventListener("change", applyMotionPreference);
     }
   }
 
