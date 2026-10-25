@@ -758,6 +758,11 @@
   object-position: center 45%;
 }
 
+/* Keep the responsive hero background poster visible if autoplay fails. */
+.hero--video-fallback .hero__video {
+  visibility: hidden;
+}
+
 @media (min-width: 768px) {
   .hero {
     background-image: url("../images/actualpay-hero-poster.webp");
