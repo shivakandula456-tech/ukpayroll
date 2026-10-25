@@ -78,8 +78,10 @@ Run these checks against the live HTTPS domain:
 - Navigation dropdowns, mobile menu and search on desktop and mobile.
 - The skip link and keyboard focus order.
 - Contact/quote form validation and the fallback link. If a provider is connected, submit one controlled test and confirm receipt, including the reply-to address.
-- Mobile: no hero MP4 request; poster visible.
-- Reduced motion: no hero video playback.
+- Mobile and desktop: verify that `assets/videos/actualpay-hero.mp4` is requested and muted inline looping playback begins without a user click; the responsive poster remains visible until video frames are available.
+- Autoplay failure or media error: verify the responsive CSS poster remains visible.
+- Reduced motion and Data Saver: hero video playback is still attempted by design, as explicitly requested; these preferences do not suppress the hero video.
+- Rerun Lighthouse and inspect the mobile network waterfall. Historical figures in `PERFORMANCE_REPORT.md` predate mobile autoplay and must not be treated as current measurements.
 - HTTPS padlock and no mixed-content warnings.
 - Canonical and social preview metadata on a sample of pages.
 - `sitemap.xml` and `robots.txt` fetch successfully.
