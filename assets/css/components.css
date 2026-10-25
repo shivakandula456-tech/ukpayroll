@@ -1817,8 +1817,3 @@
   height: 18px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero__video {
-    display: none;
-  }
-}
